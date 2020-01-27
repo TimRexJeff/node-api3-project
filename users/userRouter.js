@@ -1,47 +1,92 @@
-const express = require('express');
+const express = require('express')
 
-const router = express.Router();
+const Users = require('./userDb.js')
+const { validateUser, validateUserId } = require('./userValidate')
 
-router.post('/', (req, res) => {
-  // do your magic!
-});
 
-router.post('/:id/posts', (req, res) => {
-  // do your magic!
-});
+const router = express.Router()
+
+router.post('/', validateUser, (req, res) => {
+  Users.insert(req.body)
+
+    .then(user => {
+      res.status(201)
+      .json(user)})
+
+    .catch(error => {
+      res.status(500)
+      .json({ error: 'We ran into an error creating the user' })
+    })
+})
 
 router.get('/', (req, res) => {
-  // do your magic!
-});
+  Users.get()
+
+    .then(users => {
+      res.status(200)
+      .json(users)})
+
+    .catch(error => {
+      res.status(500)
+      .json({ error: 'We ran into an error retrieving the users' })
+    })
+})
 
 router.get('/:id', (req, res) => {
-  // do your magic!
-});
+  Users.getById(req.params.id)
+    .then(user => {
 
-router.get('/:id/posts', (req, res) => {
-  // do your magic!
-});
+      if (user) {
+        res.status(200)
+        .json(user)
 
-router.delete('/:id', (req, res) => {
-  // do your magic!
-});
+      } else {
+        res.status(404)
+        .json({ message: 'There is no user with that id' })}})
 
-router.put('/:id', (req, res) => {
-  // do your magic!
-});
+    .catch(error => {
+      res.status(500)
+      .json({ error: 'We ran into an error retrieving the user' })
+    })
+})
 
-//custom middleware
+router.get('/:id/posts', validateUserId, (req, res) => {
+  Users.getUserPosts(req.params.id)
 
-function validateUserId(req, res, next) {
-  // do your magic!
-}
+    .then(posts => {
+      res.status(200)
+      .json(posts)})
 
-function validateUser(req, res, next) {
-  // do your magic!
-}
+    .catch(error => {
+      res.status(500)
+      .json({ error: "We ran into an error retrieving the user's posts" })
+    })
+})
 
-function validatePost(req, res, next) {
-  // do your magic!
-}
+router.put('/:id', validateUserId, validateUser, (req, res) => {
+  Users.update(req.params.id, req.body)
 
-module.exports = router;
+    .then(() => {
+      res.status(200)
+      .json({ message: 'User updated successfully' })})
+
+    .catch(error => {
+      res.status(500)
+      .json({ error: 'We ran into an error removing the user' })
+    })
+})
+
+router.delete('/:id', validateUserId, (req, res) => {
+  Users.remove(req.params.id)
+
+    .then(() => {
+      res.status(200)
+      .json({ message: 'user deleted successfully' })})
+
+    .catch(error => {
+      res.status(500)
+      .json({ error: 'We ran into an error removing the user' })
+    })
+})
+
+module.exports = router
